@@ -50,6 +50,13 @@
             android:layout_height="match_parent">
 
         </androidx.camera.view.PreviewView>
+
+        <com.atharvakale.facerecognition.FaceBoxOverlay
+            android:id="@+id/faceBoxOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"/>
+
     </FrameLayout>
 
     <ImageButton

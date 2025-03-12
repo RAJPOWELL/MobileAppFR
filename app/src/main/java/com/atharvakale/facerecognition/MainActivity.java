@@ -117,12 +117,14 @@ public class MainActivity extends AppCompatActivity {
     String modelFile="mobile_face_net.tflite"; //model name
 
     private HashMap<String, SimilarityClassifier.Recognition> registered = new HashMap<>(); //saved Faces
+    private FaceBoxOverlay faceBoxOverlay;
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         registered=readFromSP(); //Load saved faces from memory when app starts
         setContentView(R.layout.activity_main);
+        faceBoxOverlay = findViewById(R.id.faceBoxOverlay);//BoxCamera Overlay
         face_preview =findViewById(R.id.imageView);
         reco_name =findViewById(R.id.textView);
         preview_info =findViewById(R.id.textView2);
@@ -234,14 +236,14 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(recognize.getText().toString().equals("Recognize"))
                 {
-                 start=true;
-                 textAbove_preview.setText("Recognized Face:");
-                recognize.setText("Add Face");
-                add_face.setVisibility(View.INVISIBLE);
-                reco_name.setVisibility(View.VISIBLE);
-                face_preview.setVisibility(View.INVISIBLE);
-                preview_info.setText("");
-                //preview_info.setVisibility(View.INVISIBLE);
+                    start=true;
+                    textAbove_preview.setText("Recognized Face:");
+                    recognize.setText("Add Face");
+                    add_face.setVisibility(View.INVISIBLE);
+                    reco_name.setVisibility(View.VISIBLE);
+                    face_preview.setVisibility(View.INVISIBLE);
+                    preview_info.setText("");
+                    //preview_info.setVisibility(View.INVISIBLE);
                 }
                 else
                 {
@@ -300,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
 
-            });
+        });
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -332,13 +334,13 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle("Enter Name");
 
-                // Set up the input
+            // Set up the input
             final EditText input = new EditText(context);
 
             input.setInputType(InputType.TYPE_CLASS_TEXT );
             builder.setView(input);
 
-                // Set up the buttons
+            // Set up the buttons
             builder.setPositiveButton("ADD", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -391,55 +393,55 @@ public class MainActivity extends AppCompatActivity {
         else{
             builder.setTitle("Select Recognition to delete:");
 
-        // add a checkbox list
-        String[] names= new String[registered.size()];
-        boolean[] checkedItems = new boolean[registered.size()];
-         int i=0;
-                for (Map.Entry<String, SimilarityClassifier.Recognition> entry : registered.entrySet())
-                {
-                    //System.out.println("NAME"+entry.getKey());
-                    names[i]=entry.getKey();
-                    checkedItems[i]=false;
-                    i=i+1;
+            // add a checkbox list
+            String[] names= new String[registered.size()];
+            boolean[] checkedItems = new boolean[registered.size()];
+            int i=0;
+            for (Map.Entry<String, SimilarityClassifier.Recognition> entry : registered.entrySet())
+            {
+                //System.out.println("NAME"+entry.getKey());
+                names[i]=entry.getKey();
+                checkedItems[i]=false;
+                i=i+1;
+
+            }
+
+            builder.setMultiChoiceItems(names, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                    // user checked or unchecked a box
+                    //Toast.makeText(MainActivity.this, names[which], Toast.LENGTH_SHORT).show();
+                    checkedItems[which]=isChecked;
 
                 }
+            });
 
-                builder.setMultiChoiceItems(names, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                        // user checked or unchecked a box
-                        //Toast.makeText(MainActivity.this, names[which], Toast.LENGTH_SHORT).show();
-                       checkedItems[which]=isChecked;
+
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                    // System.out.println("status:"+ Arrays.toString(checkedItems));
+                    for(int i=0;i<checkedItems.length;i++)
+                    {
+                        //System.out.println("status:"+checkedItems[i]);
+                        if(checkedItems[i])
+                        {
+//                                Toast.makeText(MainActivity.this, names[i], Toast.LENGTH_SHORT).show();
+                            registered.remove(names[i]);
+                        }
 
                     }
-                });
+                    insertToSP(registered,2); //mode: 0:save all, 1:clear all, 2:update all
+                    Toast.makeText(context, "Recognitions Updated", Toast.LENGTH_SHORT).show();
+                }
+            });
+            builder.setNegativeButton("Cancel", null);
 
-
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-                       // System.out.println("status:"+ Arrays.toString(checkedItems));
-                        for(int i=0;i<checkedItems.length;i++)
-                        {
-                            //System.out.println("status:"+checkedItems[i]);
-                            if(checkedItems[i])
-                            {
-//                                Toast.makeText(MainActivity.this, names[i], Toast.LENGTH_SHORT).show();
-                                registered.remove(names[i]);
-                            }
-
-                        }
-                insertToSP(registered,2); //mode: 0:save all, 1:clear all, 2:update all
-                Toast.makeText(context, "Recognitions Updated", Toast.LENGTH_SHORT).show();
-            }
-        });
-        builder.setNegativeButton("Cancel", null);
-
-        // create and show the alert dialog
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
+            // create and show the alert dialog
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
     }
     private void hyperparameters()
     {
@@ -460,7 +462,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 //Toast.makeText(context, input.getText().toString(), Toast.LENGTH_SHORT).show();
 
-               distance= Float.parseFloat(input.getText().toString());
+                distance= Float.parseFloat(input.getText().toString());
 
 
                 SharedPreferences sharedPref = getSharedPreferences("Distance",Context.MODE_PRIVATE);
@@ -485,7 +487,7 @@ public class MainActivity extends AppCompatActivity {
     private void displaynameListview()
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-       // System.out.println("Registered"+registered);
+        // System.out.println("Registered"+registered);
         if(registered.isEmpty())
             builder.setTitle("No Faces Added!!");
         else
@@ -514,7 +516,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-            // create and show the alert dialog
+        // create and show the alert dialog
         AlertDialog dialog = builder.create();
         dialog.show();
     }
@@ -578,93 +580,44 @@ public class MainActivity extends AppCompatActivity {
         imageAnalysis.setAnalyzer(executor, new ImageAnalysis.Analyzer() {
             @Override
             public void analyze(@NonNull ImageProxy imageProxy) {
-                try {
-                    Thread.sleep(0);  //Camera preview refreshed every 10 millisec(adjust as required)
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 InputImage image = null;
-
-
-                @SuppressLint("UnsafeExperimentalUsageError")
-                // Camera Feed-->Analyzer-->ImageProxy-->mediaImage-->InputImage(needed for ML kit face detection)
-
                 Image mediaImage = imageProxy.getImage();
 
                 if (mediaImage != null) {
                     image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
-//                    System.out.println("Rotation "+imageProxy.getImageInfo().getRotationDegrees());
                 }
 
-//                System.out.println("ANALYSIS");
+                detector.process(image)
+                        .addOnSuccessListener(faces -> {
+                            if (!faces.isEmpty()) {
+                                Face face = faces.get(0);
 
-                //Process acquired image to detect faces
-                Task<List<Face>> result =
-                        detector.process(image)
-                                .addOnSuccessListener(
-                                        new OnSuccessListener<List<Face>>() {
-                                            @Override
-                                            public void onSuccess(List<Face> faces) {
+                                // Convert bounding box to RectF
+                                RectF boundingBox = new RectF(face.getBoundingBox());
 
-                                                if(faces.size()!=0) {
+                                // Convert Image to Bitmap
+                                Bitmap frameBitmap = toBitmap(mediaImage);
+                                int rotation = imageProxy.getImageInfo().getRotationDegrees();
+                                Bitmap rotatedBitmap = rotateBitmap(frameBitmap, rotation, flipX, false);
+                                Bitmap croppedFace = getCropBitmapByCPU(rotatedBitmap, boundingBox);
+                                Bitmap scaledFace = getResizedBitmap(croppedFace, 112, 112);
 
-                                                    Face face = faces.get(0); //Get first face from detected faces
-//                                                    System.out.println(face);
+                                // Recognize the face
+                                boolean isRecognized = recognizeImage(scaledFace);
 
-                                                    //mediaImage to Bitmap
-                                                    Bitmap frame_bmp = toBitmap(mediaImage);
-
-                                                    int rot = imageProxy.getImageInfo().getRotationDegrees();
-
-                                                    //Adjust orientation of Face
-                                                    Bitmap frame_bmp1 = rotateBitmap(frame_bmp, rot, false, false);
-
-
-
-                                                    //Get bounding box of face
-                                                    RectF boundingBox = new RectF(face.getBoundingBox());
-
-                                                    //Crop out bounding box from whole Bitmap(image)
-                                                    Bitmap cropped_face = getCropBitmapByCPU(frame_bmp1, boundingBox);
-
-                                                    if(flipX)
-                                                        cropped_face = rotateBitmap(cropped_face, 0, flipX, false);
-                                                    //Scale the acquired Face to 112*112 which is required input for model
-                                                    Bitmap scaled = getResizedBitmap(cropped_face, 112, 112);
-
-                                                    if(start)
-                                                        recognizeImage(scaled); //Send scaled bitmap to create face embeddings.
-//                                                    System.out.println(boundingBox);
-
-                                                }
-                                                else
-                                                {
-                                                    if(registered.isEmpty())
-                                                        reco_name.setText("Add Face");
-                                                    else
-                                                        reco_name.setText("No Face Detected!");
-                                                }
-
-                                            }
-                                        })
-                                .addOnFailureListener(
-                                        new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull Exception e) {
-                                                // Task failed with an exception
-                                                // ...
-                                            }
-                                        })
-                                .addOnCompleteListener(new OnCompleteListener<List<Face>>() {
-                            @Override
-                            public void onComplete(@NonNull Task<List<Face>> task) {
-
-                                imageProxy.close(); //v.important to acquire next frame for analysis
+                                // Update bounding box overlay color based on recognition
+                                List<RectF> boxes = new ArrayList<>();
+                                boxes.add(boundingBox);
+                                faceBoxOverlay.setFaceBoxes(boxes, isRecognized);
+                            } else {
+                                reco_name.setText(registered.isEmpty() ? "Add Face" : "No Face Detected!");
+                                faceBoxOverlay.setFaceBoxes(new ArrayList<>(), false); // Clear overlay if no face detected
                             }
-                        });
-
-
+                            imageProxy.close();
+                        })
+                        .addOnFailureListener(e -> imageProxy.close());
             }
+
         });
 
 
@@ -673,29 +626,24 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void recognizeImage(final Bitmap bitmap) {
-
-        // set Face to Preview
+    public boolean recognizeImage(final Bitmap bitmap) {
+        // Set Face to Preview
         face_preview.setImageBitmap(bitmap);
 
-        //Create ByteBuffer to store normalized image
-
+        // Create ByteBuffer to store normalized image
         ByteBuffer imgData = ByteBuffer.allocateDirect(1 * inputSize * inputSize * 3 * 4);
-
         imgData.order(ByteOrder.nativeOrder());
 
         intValues = new int[inputSize * inputSize];
 
-        //get pixel values from Bitmap to normalize
+        // Get pixel values from Bitmap to normalize
         bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-
         imgData.rewind();
 
         for (int i = 0; i < inputSize; ++i) {
             for (int j = 0; j < inputSize; ++j) {
                 int pixelValue = intValues[i * inputSize + j];
                 if (isModelQuantized) {
-                    // Quantized model
                     imgData.put((byte) ((pixelValue >> 16) & 0xFF));
                     imgData.put((byte) ((pixelValue >> 8) & 0xFF));
                     imgData.put((byte) (pixelValue & 0xFF));
@@ -703,72 +651,51 @@ public class MainActivity extends AppCompatActivity {
                     imgData.putFloat((((pixelValue >> 16) & 0xFF) - IMAGE_MEAN) / IMAGE_STD);
                     imgData.putFloat((((pixelValue >> 8) & 0xFF) - IMAGE_MEAN) / IMAGE_STD);
                     imgData.putFloat(((pixelValue & 0xFF) - IMAGE_MEAN) / IMAGE_STD);
-
                 }
             }
         }
-        //imgData is input to our model
+
+        // Prepare input for model
         Object[] inputArray = {imgData};
-
         Map<Integer, Object> outputMap = new HashMap<>();
-
-
-        embeedings = new float[1][OUTPUT_SIZE]; //output of model will be stored in this variable
-
+        embeedings = new float[1][OUTPUT_SIZE]; // Output of model
         outputMap.put(0, embeedings);
 
-        tfLite.runForMultipleInputsOutputs(inputArray, outputMap); //Run model
+        // Run the model
+        tfLite.runForMultipleInputsOutputs(inputArray, outputMap);
 
-
-
+        // Default values
         float distance_local = Float.MAX_VALUE;
-        String id = "0";
-        String label = "?";
+        boolean isRecognized = false;
 
-        //Compare new face with saved Faces.
+        // Compare new face with saved faces
         if (registered.size() > 0) {
-
-            final List<Pair<String, Float>> nearest = findNearest(embeedings[0]);//Find 2 closest matching face
+            final List<Pair<String, Float>> nearest = findNearest(embeedings[0]); // Find closest matches
 
             if (nearest.get(0) != null) {
-
-                final String name = nearest.get(0).first; //get name and distance of closest matching face
-               // label = name;
+                final String name = nearest.get(0).first;
                 distance_local = nearest.get(0).second;
-                if (developerMode)
-                {
-                    if(distance_local<distance) //If distance between Closest found face is more than 1.000 ,then output UNKNOWN face.
-                        reco_name.setText("Nearest: "+name +"\nDist: "+ String.format("%.3f",distance_local)+"\n2nd Nearest: "+nearest.get(1).first +"\nDist: "+ String.format("%.3f",nearest.get(1).second));
-                    else
-                        reco_name.setText("Unknown "+"\nDist: "+String.format("%.3f",distance_local)+"\nNearest: "+name +"\nDist: "+ String.format("%.3f",distance_local)+"\n2nd Nearest: "+nearest.get(1).first +"\nDist: "+ String.format("%.3f",nearest.get(1).second));
 
-//                    System.out.println("nearest: " + name + " - distance: " + distance_local);
-                }
-                else
-                {
-                    if(distance_local<distance) //If distance between Closest found face is more than 1.000 ,then output UNKNOWN face.
-                        reco_name.setText(name);
-                    else
-                        reco_name.setText("Unknown");
-//                    System.out.println("nearest: " + name + " - distance: " + distance_local);
+                if (distance_local < distance) { // Face is recognized
+                    reco_name.setText(name);
+                    isRecognized = true;
+                } else { // Face not recognized
+                    reco_name.setText("Unknown");
                 }
 
-
-
+                // Developer mode details
+                if (developerMode) {
+                    reco_name.append("\nDist: " + String.format("%.3f", distance_local));
+                    reco_name.append("\n2nd Nearest: " + nearest.get(1).first + " (Dist: " + String.format("%.3f", nearest.get(1).second) + ")");
                 }
             }
+        } else {
+            reco_name.setText("No Faces Registered");
+        }
 
-
-//            final int numDetectionsOutput = 1;
-//            final ArrayList<SimilarityClassifier.Recognition> recognitions = new ArrayList<>(numDetectionsOutput);
-//            SimilarityClassifier.Recognition rec = new SimilarityClassifier.Recognition(
-//                    id,
-//                    label,
-//                    distance);
-//
-//            recognitions.add( rec );
-
+        return isRecognized; // Return whether the face is recognized or not
     }
+
 //    public void register(String name, SimilarityClassifier.Recognition rec) {
 //        registered.put(name, rec);
 //    }
@@ -782,7 +709,7 @@ public class MainActivity extends AppCompatActivity {
         {
 
             final String name = entry.getKey();
-           final float[] knownEmb = ((float[][]) entry.getValue().getExtra())[0];
+            final float[] knownEmb = ((float[][]) entry.getValue().getExtra())[0];
 
             float distance = 0;
             for (int i = 0; i < emb.length; i++) {
@@ -978,10 +905,10 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("HashMap", MODE_PRIVATE);
         String defValue = new Gson().toJson(new HashMap<String, SimilarityClassifier.Recognition>());
         String json=sharedPreferences.getString("map",defValue);
-       // System.out.println("Output json"+json.toString());
+        // System.out.println("Output json"+json.toString());
         TypeToken<HashMap<String,SimilarityClassifier.Recognition>> token = new TypeToken<HashMap<String,SimilarityClassifier.Recognition>>() {};
         HashMap<String,SimilarityClassifier.Recognition> retrievedMap=new Gson().fromJson(json,token.getType());
-       // System.out.println("Output map"+retrievedMap.toString());
+        // System.out.println("Output map"+retrievedMap.toString());
 
         //During type conversion and save/load procedure,format changes(eg float converted to double).
         //So embeddings need to be extracted from it in required format(eg.double to float).
@@ -1056,8 +983,8 @@ public class MainActivity extends AppCompatActivity {
                                 Bitmap scaled = getResizedBitmap(cropped_face, 112, 112);
                                 // face_preview.setImageBitmap(scaled);
 
-                                    recognizeImage(scaled);
-                                    addFace();
+                                recognizeImage(scaled);
+                                addFace();
 //                                System.out.println(boundingBox);
                                 try {
                                     Thread.sleep(100);
@@ -1093,4 +1020,3 @@ public class MainActivity extends AppCompatActivity {
     }
 
 }
-
